@@ -1,13 +1,13 @@
-import express from "express";
-import { db } from "./db.js";
-import { verificarValidaciones } from "./validaciones.js";
+import {Router} from "express";
+import pool from "../db.js";
+import { verificarValidaciones } from "../validaciones.js";
 import { body } from "express-validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import passport from "passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
 
-const router = express.Router();
+const router = Router();
 
 export function authConfig() {
   // configuracion de passport-jwt
@@ -41,28 +41,27 @@ router.post(
     minNumbers: 1,
     minSymbols: 0,
   }),
-  verificarValidaciones,
-  async (req, res) => {
+  verificarValidaciones, async (req, res) => {
     try {
       const { nombre, email, contraseña } = req.body;
 
       // Verificacion de usuario
-      const [existingUsers] = await db.execute(
+      const [existeUsuario] = await pool.query(
         "SELECT id FROM usuarios WHERE email = ?",
         [email]
       );
 
-      if (existingUsers.length > 0) {
+      if (existeUsuario.length > 0) {
         return res.status(400).json({ success: false, error: "usuario ya registrado " });
       }
 
       // hash contraseña
       const hashedPassword = await bcrypt.hash(contraseña, 12);
 
-     
+  
 
       // Insertar usuario
-      const [result] = await db.execute(
+      const [result] = await pool.query(
         "INSERT INTO usuario (nombre, email, contraseña) VALUES (?, ?, ?)",
         [nombre, email, contraseña]
       );
@@ -92,7 +91,7 @@ verificarValidaciones, async (req, res) => {
     try { const { email, contraseña } = req.body;
 
       // Consultar por el usuario
-      const [usuarios] = await db.execute(
+      const [usuarios] = await pool.query(
         "SELECT * FROM usuario WHERE email = ?",
         [email]
       );
@@ -129,7 +128,7 @@ verificarValidaciones, async (req, res) => {
     } catch (error) { console.error("Login incorrecto :", error);
 
       res.status(500).json({ success: false, error: "sesion incorrecta",
-        
+
       });
     }
   }

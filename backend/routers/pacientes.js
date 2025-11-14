@@ -1,7 +1,7 @@
 import {Router} from "express";
 import pool from "../db.js";
 import { validacionPacientes, validarId, verificarValidaciones } from "../validaciones";
-import { verificarAutenticacion } from "../auth.js";
+import { verificarAutenticacion } from "./auth.js";
 
 const router = Router();
 

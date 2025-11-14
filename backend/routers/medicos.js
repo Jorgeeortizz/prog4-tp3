@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import pool from '../db.js';
 import { validacionMedico, validarId, verificarValidaciones } from "../validaciones.js";
-import { verificarAutenticacion } from "../auth.js";
+import { verificarAutenticacion } from "./auth.js";
 
 const router = Router();
 
@@ -71,8 +71,7 @@ router.put("/:id", verificarAutenticacion, validarId, validacionMedico, verifica
       }
   
 
-  const [result] = await pool.query(
-    "UPDATE medicos SET nombre = ?, apellido = ?, especialidad = ?, matricula = ? WHERE id = ?",
+  const [result] = await pool.query( "UPDATE medicos SET nombre = ?, apellido = ?, especialidad = ?, matricula = ? WHERE id = ?",
     [nombre, apellido, especialidad, matricula, req.params.id] );
 
   if (result.affectedRows === 0) {
