@@ -1,9 +1,9 @@
-import { Router } from 'express';
-import pool from '../db.js';
+import express from 'express';
+import {db} from '../db.js';
 import { validacionMedico, validarId, verificarValidaciones } from "../validaciones.js";
 import { verificarAutenticacion } from "./auth.js";
 
-const router = Router();
+const router = express.Router();
 
 // mostrar medicos
 router.get("/", verificarAutenticacion, async (req, res) => {
@@ -22,7 +22,7 @@ router.get("/", verificarAutenticacion, async (req, res) => {
 
 // buscar medico
 router.get('/:id', verificarAutenticacion, validarId,  verificarValidaciones , async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM medicos WHERE id = ?", [req.params.id]);
+  const [rows] = await db.execute("SELECT * FROM medicos WHERE id = ?", [req.params.id]);
 
   if (rows.length <= 0) {
     return res.status(404).json({ message: "Médico no registrado" });
@@ -46,7 +46,7 @@ router.post('/', verificarAutenticacion, validacionMedico, verificarValidaciones
         });
       }
 
-  const [result] = await pool.query(
+  const [result] = await db.execute(
     "INSERT INTO medicos (nombre, apellido, especialidad, matricula) VALUES (?, ?, ?, ?)",
     [nombre, apellido, especialidad, matricula]
   );
@@ -71,7 +71,7 @@ router.put("/:id", verificarAutenticacion, validarId, validacionMedico, verifica
       }
   
 
-  const [result] = await pool.query( "UPDATE medicos SET nombre = ?, apellido = ?, especialidad = ?, matricula = ? WHERE id = ?",
+  const [result] = await db.execute( "UPDATE medicos SET nombre = ?, apellido = ?, especialidad = ?, matricula = ? WHERE id = ?",
     [nombre, apellido, especialidad, matricula, req.params.id] );
 
   if (result.affectedRows === 0) {
@@ -82,7 +82,7 @@ router.put("/:id", verificarAutenticacion, validarId, validacionMedico, verifica
 
 // Eliminar médico
 router.delete('/:id', verificarAutenticacion, validarId, verificarValidaciones, async (req, res) => {
-  const [result] = await pool.query("DELETE FROM medicos WHERE id = ?", [req.params.id]);
+  const [result] = await db.execute("DELETE FROM medicos WHERE id = ?", [req.params.id]);
 
   if (result.affectedRows === 0) {
     return res.status(404).json({ message: "medico no registrado" });

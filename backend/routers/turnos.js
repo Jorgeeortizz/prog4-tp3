@@ -1,9 +1,9 @@
-import {Router} from "express";
-import pool from "../db.js";
+import express from "express";
+import {db} from "../db.js";
 import { validarId, verificarValidaciones, validacionTurnos } from "../validaciones.js";
 import {verificarAutenticacion } from './auth.js';
 
-const router = Router();
+const router = express.Router();
 
 
 router.get('/', verificarAutenticacion, async (req, res) => {
@@ -16,7 +16,7 @@ router.get('/', verificarAutenticacion, async (req, res) => {
             JOIN medicos m ON t.medico_id = m.id
 `;
 
-    const [rows] = await pool.query(sql);
+    const [rows] = await db.execute(sql);
     res.json({ success: true, data: rows });
 });
 
@@ -24,7 +24,7 @@ router.get('/', verificarAutenticacion, async (req, res) => {
 // turnos pacientes
 router.get('/pacientes/:id/turnos', verificarAutenticacion,validarId, verificarValidaciones, async (req, res) => {
     const { id } = req.params;
-    const [rows] = await pool.query("SELECT * FROM turnos WHERE paciente_id = ?", [id]);
+    const [rows] = await db.execute("SELECT * FROM turnos WHERE paciente_id = ?", [id]);
     if (rows.length === 0) {
         return res.status(404).json({ success: false, message: "paciente no registrado" });
     }
@@ -35,7 +35,7 @@ router.get('/pacientes/:id/turnos', verificarAutenticacion,validarId, verificarV
 // turnos medicos
 router.get('/medicos/:id/turnos',verificarAutenticacion, validarId, verificarValidaciones, async (req, res) => {
     const { id } = req.params;
-    const [rows] = await pool.query("SELECT * FROM turnos WHERE medico_id = ?", [id]);
+    const [rows] = await db.execute("SELECT * FROM turnos WHERE medico_id = ?", [id]);
     if (rows.length === 0) {
         return res.status(404).json({ success: false, message: "El médico no registrado" });
     }
@@ -62,7 +62,7 @@ router.get('/:id',verificarAutenticacion, validarId, verificarValidaciones, asyn
         WHERE t.id = ?
     `;
 
-    const [rows] = await pool.query(sql, [id]);
+    const [rows] = await db.execute(sql, [id]);
 
     if (rows.length === 0) {
         return res.status(404).json({ success: false, message: "Turno registrado" });
@@ -74,7 +74,7 @@ router.get('/:id',verificarAutenticacion, validarId, verificarValidaciones, asyn
 router.post("/", verificarAutenticacion, validacionTurnos, verificarValidaciones, async (req, res) => {
     const { paciente_id, medico_id, fecha, hora, estado, observaciones } = req.body;
 
-    const [result] = await pool.query(
+    const [result] = await db.execute(
         "INSERT INTO turnos (paciente_id, medico_id, fecha, hora, estado, observaciones) VALUES (?,?,?,?,?,?)",
         [paciente_id, medico_id, fecha, hora, estado, observaciones]
     );
@@ -90,7 +90,7 @@ router.put( "/:id",verificarAutenticacion, validarId, validacionTurnos,  verific
         const { id } = req.params;
         const { paciente_id, medico_id, fecha, hora, estado, observaciones } = req.body;
 
-        await pool.query(
+        await db.execute(
             "UPDATE turnos SET paciente_id=?, medico_id=?, fecha=?, hora=?, estado=?, observaciones=? WHERE id=?",
             [paciente_id, medico_id, fecha, hora, estado, observaciones, id]
         );
@@ -104,7 +104,7 @@ router.put( "/:id",verificarAutenticacion, validarId, validacionTurnos,  verific
 
 router.delete("/:id", verificarAutenticacion, validarId, verificarValidaciones, async (req, res) => {
     const { id } = req.params;
-    await pool.query("DELETE FROM turnos WHERE id=?", [id]);
+    await db.execute("DELETE FROM turnos WHERE id=?", [id]);
     res.json({ success: true, message: "Turno eliminado" });
 });
 

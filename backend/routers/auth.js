@@ -1,5 +1,5 @@
-import {Router} from "express";
-import pool from "../db.js";
+import express from "express";
+import {db}  from "../db.js";
 import { verificarValidaciones } from "../validaciones.js";
 import { body } from "express-validator";
 import bcrypt from "bcrypt";
@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import passport from "passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
 
-const router = Router();
+const router = express.Router();
 
 export function authConfig() {
   // configuracion de passport-jwt
@@ -46,7 +46,7 @@ router.post(
       const { nombre, email, contraseña } = req.body;
 
       // Verificacion de usuario
-      const [existeUsuario] = await pool.query(
+      const [existeUsuario] = await db.execute(
         "SELECT id FROM usuarios WHERE email = ?",
         [email]
       );
@@ -61,7 +61,7 @@ router.post(
   
 
       // Insertar usuario
-      const [result] = await pool.query(
+      const [result] = await db.execute(
         "INSERT INTO usuario (nombre, email, contraseña) VALUES (?, ?, ?)",
         [nombre, email, contraseña]
       );
@@ -91,7 +91,7 @@ verificarValidaciones, async (req, res) => {
     try { const { email, contraseña } = req.body;
 
       // Consultar por el usuario
-      const [usuarios] = await pool.query(
+      const [usuarios] = await db.execute(
         "SELECT * FROM usuario WHERE email = ?",
         [email]
       );
