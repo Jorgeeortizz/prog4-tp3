@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "tp3 programacion 4 backend",
   "main": "index.js",
+  "type":"module",
   "scripts": {
     "dev": "node --env-file=.env --watch index.js"
   },
