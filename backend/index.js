@@ -10,13 +10,6 @@ import RouterAuth, { authConfig } from "./routers/auth.js";
 import cors from "cors";
 
 
-
-
-saludar();
-
-
-
-
 conectarDB();
 
 const app = express();

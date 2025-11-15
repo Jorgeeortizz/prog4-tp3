@@ -1,5 +1,5 @@
 import express from "express";
-import {db} from "..db.js";
+import {db} from "../db.js";
 import { validarId, verificarValidaciones, validacionUsuarios } from "../validaciones.js";
 import { verificarAutenticacion } from "./auth.js";
 import bcrypt from "bcrypt";
@@ -70,7 +70,7 @@ router.put("/:id", verificarAutenticacion, validarId,validacionUsuarios,verifica
             return res.status(404).json({ success: false, error: "Usuario no registrado" });
         }
 
-        const hashContraseña = password ? await bcrypt.hash(password, 12) : usuario.password_hash;
+        const hashContraseña = contraseña ? await bcrypt.hash(contraseña, 12) : usuario.password_hash;
 
         await db.execute( "UPDATE usuarios SET nombre=?, contraseña=?, email=? WHERE id=?",
             [nombre, hashContraseña, email, id]

@@ -53,7 +53,7 @@ export const validacionUsuarios = [
 ]
 
 export const validacionTurnos = [
-    body("paciente_id")
+    body("pacientes")
         .isInt({ min: 1 }).withMessage("El ID del paciente debe ser un número entero positivo.")
         .custom(async (value) => {
             const [rows] = await db.execute("SELECT * FROM pacientes WHERE id = ?", [value]);
@@ -63,7 +63,7 @@ export const validacionTurnos = [
             return true;
         }),
 
-    body("medico_id")
+    body("medicos")
         .isInt({ min: 1 }).withMessage("El ID del médico debe ser un número entero positivo.")
         .custom(async (value) => {
             const [rows] = await db.execute("SELECT * FROM medicos WHERE id = ?", [value]);

@@ -1,7 +1,7 @@
 import express from "express";
 import {db} from "../db.js";
 
-import { validacionPacientes, validarId, verificarValidaciones } from "../validaciones";
+import { validacionPacientes, validarId, verificarValidaciones } from "../validaciones.js";
 import { verificarAutenticacion } from "./auth.js";
 
 const router = express.Router();
@@ -75,3 +75,6 @@ router.delete('/:id', verificarAutenticacion, validarId, verificarValidaciones, 
   }
   res.json({ message: "paciente eliminado" });
 });
+
+
+export default router;

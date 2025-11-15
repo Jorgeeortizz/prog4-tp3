@@ -1,37 +1,40 @@
 import express from "express";
-import {db}  from "../db.js";
-import { verificarValidaciones } from "../validaciones.js";
-
+import { db } from "../db.js";
+import { validarId, verificarValidaciones } from "../validaciones.js";
+import { body } from "express-validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import passport from "passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
+import dotenv from "dotenv";
+dotenv.config();
 
 const router = express.Router();
 
 export function authConfig() {
-  // configuracion de passport-jwt
   const jwtOptions = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET,
   };
 
-  // Creo estrategia jwt
   passport.use(
-    new Strategy(jwtOptions, async (payload, next) => {
-      
-      next(null, payload);
+    new Strategy(jwtOptions, async (payload, done) => {
+      try {
+        const [usuarios] = await db.execute("SELECT * FROM usuarios WHERE id = ?", [payload.userId]);
+        if (usuarios.length === 0) return done(null, false);
+        return done(null, usuarios[0]);
+      } catch (error) {
+        return done(error, false);
+      }
     })
   );
 }
 
-export const verificarAutenticacion = passport.authenticate("jwt", {
-  session: false,
-});
+export const verificarAutenticacion = passport.authenticate("jwt", { session: false });
 
-// Ruta de registro
+// Registro
 router.post(
-  "/login",
+  "/register",
   body("nombre").notEmpty().isAlphanumeric("es-ES").isLength({ max: 16 }),
   body("email").isEmail().normalizeEmail(),
   body("contraseña").isStrongPassword({
@@ -41,95 +44,71 @@ router.post(
     minNumbers: 1,
     minSymbols: 0,
   }),
-  verificarValidaciones, async (req, res) => {
+  verificarValidaciones,
+  async (req, res) => {
     try {
       const { nombre, email, contraseña } = req.body;
 
-      // Verificacion de usuario
-      const [existeUsuario] = await db.execute(
-        "SELECT id FROM usuarios WHERE email = ?",
-        [email]
-      );
-
+      const [existeUsuario] = await db.execute("SELECT id FROM usuarios WHERE email = ?", [email]);
       if (existeUsuario.length > 0) {
-        return res.status(400).json({ success: false, error: "usuario ya registrado " });
+        return res.status(400).json({ success: false, error: "usuario ya registrado" });
       }
 
-      // hash contraseña
-      const hashedPassword = await bcrypt.hash(contraseña, 12);
+      const hashContraseña = await bcrypt.hash(contraseña, 12);
 
-  
-
-      // Insertar usuario
       const [result] = await db.execute(
-        "INSERT INTO usuario (nombre, email, contraseña) VALUES (?, ?, ?)",
-        [nombre, email, contraseña]
+        "INSERT INTO usuarios (nombre, email, contraseña) VALUES (?, ?, ?)",
+        [nombre, email, hashContraseña]
       );
 
-      // Generar token jwt
       const payload = { userId: result.insertId, email };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "2h",
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "2h" });
+
+      res.status(201).json({
+        success: true,
+        token,
+        message: "Usuario registrado",
+        username: { id: result.insertId, nombre, email },
       });
-
-      res.status(201).json({ success: true, token, message: "Usuario registrado", username: { id: result.insertId, nombre, email },
-
-      });
-
     } catch (error) {
       console.error("Error en registro:", error);
-      res.status(500).json({ success: false, error: "Error al registrar usuario",
-
-      });
+      res.status(500).json({ success: false, error: "Error al registrar usuario" });
     }
   }
 );
 
-// Ruta de login
-router.post( "/login", body("email").isEmail().normalizeEmail(), body("contraseña").notEmpty(),
-verificarValidaciones, async (req, res) => {
-    try { const { email, contraseña } = req.body;
+// Login
+router.post(
+  "/login",
+  body("email").isEmail().normalizeEmail(),
+  body("contraseña").notEmpty(),
+  verificarValidaciones,
+  async (req, res) => {
+    try {
+      const { email, contraseña } = req.body;
 
-      // Consultar por el usuario
-      const [usuarios] = await db.execute(
-        "SELECT * FROM usuario WHERE email = ?",
-        [email]
-      );
-
+      const [usuarios] = await db.execute("SELECT * FROM usuarios WHERE email = ?", [email]);
       if (usuarios.length === 0) {
-        return res.status(401).json({
-          success: false,
-          error: "usuario inválidas",
-        });
+        return res.status(401).json({ success: false, error: "usuario inválido" });
       }
 
-      // comparar contraseña
       const usuario = usuarios[0];
       const contraseñaCompared = await bcrypt.compare(contraseña, usuario.contraseña);
-
       if (!contraseñaCompared) {
-        return res.status(401).json({
-          success: false,
-          error: "contraseña inválidas",
-        });
+        return res.status(401).json({ success: false, error: "contraseña inválida" });
       }
 
-      //generar JWT
       const payload = { userId: usuario.id, email: usuario.email };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "2h",
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "2h" });
+
+      res.json({
+        success: true,
+        token,
+        username: { id: usuario.id, nombre: usuario.nombre, email: usuario.email },
       });
-
-      // Devolver token y datos del usuario - sin la contraseña
-      res.json({ success: true,token, username: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, },
-
-      });
-
-    } catch (error) { console.error("Login incorrecto :", error);
-
-      res.status(500).json({ success: false, error: "sesion incorrecta",
-
-      });
+    } catch (error) {
+      console.error("Login incorrecto:", error);
+      res.status(500).json({ success: false, error: "sesión incorrecta" });
     }
   }
 );
