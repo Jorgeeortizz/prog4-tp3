@@ -1,7 +1,7 @@
 import express from "express";
 import {db}  from "../db.js";
 import { verificarValidaciones } from "../validaciones.js";
-import { body } from "express-validator";
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import passport from "passport";

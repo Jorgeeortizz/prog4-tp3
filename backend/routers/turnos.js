@@ -1,12 +1,13 @@
 import express from "express";
 import {db} from "../db.js";
+import { body, query } from "express-validator";
 import { validarId, verificarValidaciones, validacionTurnos } from "../validaciones.js";
 import {verificarAutenticacion } from './auth.js';
 
 const router = express.Router();
 
 
-router.get('/', verificarAutenticacion, async (req, res) => {
+router.get('/', verificarAutenticacion, validacionTurnos, verificarValidaciones, async (req, res) => {
     let sql = `
         SELECT t.id, t.fecha, t.hora, t.estado, t.observaciones,
             p.id as paciente_id, p.nombre as paciente_nombre, p.apellido as paciente_apellido,
@@ -22,7 +23,7 @@ router.get('/', verificarAutenticacion, async (req, res) => {
 
 
 // turnos pacientes
-router.get('/pacientes/:id/turnos', verificarAutenticacion,validarId, verificarValidaciones, async (req, res) => {
+router.get('/pacientes/:id/turnos', verificarAutenticacion, validarId, verificarValidaciones, async (req, res) => {
     const { id } = req.params;
     const [rows] = await db.execute("SELECT * FROM turnos WHERE paciente_id = ?", [id]);
     if (rows.length === 0) {

@@ -1,5 +1,6 @@
 import express from "express";
 import {db} from "../db.js";
+
 import { validacionPacientes, validarId, verificarValidaciones } from "../validaciones";
 import { verificarAutenticacion } from "./auth.js";
 
