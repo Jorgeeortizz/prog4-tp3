@@ -1,5 +1,5 @@
 import express from "express";
-import { conectarDB } from "./db.js";
+import { conectarDB } from "./db.js"
 
 import RouterMedicos from "./routers/medicos.js";
 import RouterPacientes from "./routers/pacientes.js";
